@@ -28,5 +28,7 @@ fast-downward/src/search/pruning/
 fast-downward/src/search/search_engines/
 fast-downward/src/search/task*
 fast-downward/src/search/utils/
-scripts/
 nomystery-opt11-strips/
+
+
+.vscode/

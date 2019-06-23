@@ -41,9 +41,45 @@ PatternDatabase::PatternDatabase(const TNFTask &task, const Pattern &pattern)
       later on. This is sufficient to turn the search into a regression since
       the task is in TNF.
     */
-    queue.push({0, projection.rank_state(projected_task.goal_state)});
+    auto goal_state_index = projection.rank_state(projected_task.goal_state);
+    distances[goal_state_index] = 0;
+    queue.push(make_pair(distances[goal_state_index], goal_state_index));
 
-    // TODO: add your code for exercise (b) here.
+    while(queue.size() > 0) {
+        auto queue_entry = queue.top();
+        queue.pop();
+        auto current_state_cost = queue_entry.first;
+        auto current_state = projection.unrank_state(queue_entry.second);
+        
+        for (auto tnf_operator : projected_task.operators) {
+            bool is_pred_state_reachable = true;
+            auto pred_state = current_state; 
+            
+            for (auto entry : tnf_operator.entries) {
+                // uma entrada de um operador é uma tripla (v,p,e), onde:
+                // v = variável (variable_id)
+                // p = valor da variável antes do operador (precondition_value)
+                // e = valor da variável depois do operator (effect_value)
+                // se os efeitos de todas as entradas forem iguais ao estado atual S,
+                // então trocar os valores de S para os valores das pré-cond, 
+                // gerará um estado S' que é predecessor de S  
+                if (entry.effect_value != pred_state[entry.variable_id]) 
+                    is_pred_state_reachable = false;
+                pred_state[entry.variable_id] = entry.precondition_value;
+            }
+            
+            if (!is_pred_state_reachable) 
+                continue;
+            
+            int curr_state_cost_with_operator = current_state_cost + tnf_operator.cost;
+            auto pred_state_index = projection.rank_state(pred_state);
+            if (curr_state_cost_with_operator >= distances[pred_state_index])
+                continue;
+
+            distances[pred_state_index] = curr_state_cost_with_operator;
+            queue.push(make_pair(curr_state_cost_with_operator, pred_state_index));
+        }
+    }
 }
 
 int PatternDatabase::lookup_distance(const TNFState &original_state) const {
