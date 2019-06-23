@@ -47,11 +47,15 @@ bool HillClimber::fits_size_bound(const std::vector<Pattern> &collection) const 
       explicitly computing the projections. Return true if the total size
       is below size_bound and false otherwise.
     */
-
-
     // TODO: add your code for exercise (f) here.
-
-    return true;
+    int count = 0;
+    for(auto p : collection){
+      count++;
+    }
+    if(count < size_bound)
+      return true;
+    else
+      return false;
 }
 
 
@@ -69,8 +73,12 @@ vector<Pattern> HillClimber::compute_initial_collection() {
       collection {{v} | v \in V}.
     */
     vector<Pattern> collection;
-
     // TODO: add your code for exercise (f) here.
+    for(unsigned int v = 0; v < task.goal_state.size(); v++){
+      Pattern p;
+      p.push_back(v);
+      collection.push_back(p);
+    }
 
     return collection;
 }
@@ -88,6 +96,53 @@ vector<vector<Pattern>> HillClimber::compute_neighbors(const vector<Pattern> &co
     vector<vector<Pattern>> neighbors;
 
     // TODO: add your code for exercise (f) here.
+    for(auto p : collection){
+      vector<int> s1;
+      for(auto v : p){
+        set<int> s2 = causally_relevant_variables[v];
+        vector<int> ans;
+        set_union(s1.begin(),s1.end(),s2.begin(),s2.end(), back_inserter(ans));
+        s1 = ans;
+      }
+
+      vector<int> intersec;
+      set_intersection(s1.begin(),s1.end(),p.begin(),p.end(), back_inserter(intersec));
+
+      vector<int> diff;
+      set_difference(s1.begin(),s1.end(),intersec.begin(),intersec.end(), back_inserter(diff));
+
+      for(auto v : diff){
+        vector<Pattern> new_collection = collection;
+        Pattern new_pattern = p;
+        bool add_v = true;
+        for(auto v2: p){
+          if(v2 == v)
+            add_v = false;
+        }
+        if(add_v)
+          new_pattern.push_back(v);
+
+        bool add_pattern = true;
+        for(auto p2 : collection){
+            if(p2.size() != new_pattern.size())
+              continue;
+            vector<int> intersec2;
+            set_intersection(p2.begin(),p2.end(),new_pattern.begin(),new_pattern.end(), back_inserter(intersec2));
+            if(intersec2.size() == p2.size()){
+              add_pattern = false;
+              break;
+            }
+        }
+        if(add_pattern){
+          new_collection.push_back(new_pattern);
+          cout << "Resulting pattern: " << endl;
+            for(unsigned int i = 0; i < new_pattern.size(); i++)
+                cout << new_pattern[i] << " ";
+            cout << endl;
+        }
+        neighbors.push_back(new_collection);
+      }
+    }
 
     return neighbors;
 }
@@ -120,9 +175,29 @@ vector<Pattern> HillClimber::run() {
       heuristic value. Remember to update current_sample_values when you
       modify current_collection.
     */
-
-
     // TODO: add your code for exercise (f) here.
+    while(true){
+      vector<Pattern> next_collection = current_collection;
+
+      int improvement = 0;
+      for(auto neigh : compute_neighbors(current_collection)){
+        vector<int> next_sample_values = compute_sample_heuristics(neigh);
+        int counter = 0;
+        for(unsigned int i = 0; i < next_sample_values.size(); i++){
+          if(next_sample_values[i] > current_sample_values[i])
+            counter++;
+        }
+        if(counter > improvement){
+          improvement = counter;
+          next_collection = neigh;
+        }
+      }
+      if(improvement == 0)
+        return current_collection;
+      current_collection = next_collection;
+      current_sample_values = compute_sample_heuristics(current_collection);
+    }
+
     return current_collection;
 }
 }
