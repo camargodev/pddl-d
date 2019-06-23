@@ -4,7 +4,21 @@
 
 using namespace std;
 
+// single execution examples (for debugging):
+    //./fast-downward/fast-downward.py --build=release64 nomystery-opt11-strips/p01.pddl --search "astar(planopt_cpdbs(patterns=[[0, 2, 3, 4]]))"
+    //./fast-downward/fast-downward.py --build=release64 nomystery-opt11-strips/p03.pddl --search 'astar(planopt_cpdbs(patterns=[[4, 5, 6], [2], [3]]))'
+
 namespace planopt_heuristics {
+
+void print_matrix(vector<vector<int> > matrix){
+    cout << "Matrix:" << endl;
+	for(unsigned int i = 0; i < matrix.size(); i++){
+		for(unsigned int j = 0; j < matrix.size(); j++){
+			cout << matrix[i][j] << "\t";
+		}
+		cout << "\n";
+	}
+}
 
 bool affects_pattern(const TNFOperator &op, const Pattern &pattern) {
     for (TNFOperatorEntry entry : op.entries) {
@@ -27,9 +41,30 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
     */
 
     vector<vector<int>> graph(patterns.size());
-
-    // TODO: add your code for exercise (d) here.
-
+    /*for(unsigned int i = 0; i < graph.size(); i++){
+        graph[i].resize(patterns.size());
+    }*/
+    for(unsigned int i = 0; i < patterns.size(); i++){      //selects one pattern from pattern
+        for(unsigned int j = 0; j < patterns.size(); j++){  //selects one more pattern to be compared with the pattern selected above
+            bool affects_i = false;
+            bool affects_j = false;
+            for(auto o : task.operators){
+                affects_i = affects_pattern(o, patterns[i]);
+                affects_j = affects_pattern(o, patterns[j]);
+                if(affects_i and affects_j) //if at least one operator affects both patterns...
+                    break;                  //...then there is no edge between them and we can stop analysing the operators.
+            }
+            if(affects_i and affects_j){
+                //graph[i][j]=0;
+                //graph[j][i]=0;
+            }
+            else{ //if no operator affects both patterns, then i has an outgoing edge to j
+                //graph[i][j]=1;
+                //graph[j][i]=1;
+                graph[i].push_back(j);
+            }
+        }
+    }
     return graph;
 }
 
@@ -71,7 +106,14 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
     */
     int h = 0;
 
-    // TODO: add your code for exercise (d) here.
+    for(unsigned int clique = 0; clique < maximal_additive_sets.size(); clique++){ // iterates through each clique in maximal_additive_sets
+        int sum = 0;
+        for(auto pdb : maximal_additive_sets[clique]){ // for each pdb in the clique, add its heuristic value to sum
+            sum += heuristic_values[pdb];
+        }
+        if(sum>h) // selects the greatest value of sum as the heuristic value
+            h = sum;
+    }
 
     return h;
 }
