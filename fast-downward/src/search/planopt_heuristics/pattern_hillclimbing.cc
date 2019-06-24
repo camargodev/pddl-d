@@ -96,54 +96,47 @@ vector<vector<Pattern>> HillClimber::compute_neighbors(const vector<Pattern> &co
     vector<vector<Pattern>> neighbors;
 
     // TODO: add your code for exercise (f) here.
+    cout << "STARTED CREATION OF NEIGHBORS" << endl << endl;
     for(auto p : collection){
-      vector<int> s1;
-      for(auto v : p){
-        set<int> s2 = causally_relevant_variables[v];
-        vector<int> ans;
-        set_union(s1.begin(),s1.end(),s2.begin(),s2.end(), back_inserter(ans));
-        s1 = ans;
-      }
-
-      vector<int> intersec;
-      set_intersection(s1.begin(),s1.end(),p.begin(),p.end(), back_inserter(intersec));
-
-      vector<int> diff;
-      set_difference(s1.begin(),s1.end(),intersec.begin(),intersec.end(), back_inserter(diff));
-
-      for(auto v : diff){
-        vector<Pattern> new_collection = collection;
-        Pattern new_pattern = p;
-        bool add_v = true;
-        for(auto v2: p){
-          if(v2 == v)
-            add_v = false;
+      set<int> s1;
+      set<int>::iterator it;
+      for(auto v : p){ //compute the set of variables that are causally relevant for any V in P
+        for(auto v2 : causally_relevant_variables[v]){
+          s1.insert(v2);
         }
-        if(add_v)
-          new_pattern.push_back(v);
-
-        bool add_pattern = true;
-        for(auto p2 : collection){
-            if(p2.size() != new_pattern.size())
-              continue;
-            vector<int> intersec2;
-            set_intersection(p2.begin(),p2.end(),new_pattern.begin(),new_pattern.end(), back_inserter(intersec2));
-            if(intersec2.size() == p2.size()){
-              add_pattern = false;
+      }
+      for(auto v : p){ //remove all variables from this set that already occur in P
+        it=s1.find(v);
+        if(it!=s1.end()){
+          s1.erase(it);
+        }
+      }
+      for(auto v : s1){ //for each variable V in the resulting set:
+        vector<Pattern> new_collection = collection;
+        set<int> new_p_set(p.begin(), p.end());
+        unsigned int prev_size = new_p_set.size();
+        new_p_set.insert(v); //P u {V}
+        unsigned int curr_size = new_p_set.size();
+        if(curr_size > prev_size){ // successful insertion of another variable to the pattern P (if false, the pattern is equal to one that's already in the collection)
+          bool new_p_exists_in_c = false;
+          for(auto old_p : collection){ // checks if the pattern created above is already part of the collection
+            set<int> old_p_set(old_p.begin(), old_p.end());
+            if(old_p_set == new_p_set){
+              new_p_exists_in_c = true;
               break;
             }
+          }
+          if(!new_p_exists_in_c){ // if not, then we add it to the collection and the new collection is a neighbor of the old collection
+            Pattern new_p(new_p_set.begin(), new_p_set.end());
+            new_collection.push_back(new_p);
+            if(fits_size_bound(new_collection)){
+              neighbors.push_back(new_collection);
+            }
+          }
         }
-        if(add_pattern){
-          new_collection.push_back(new_pattern);
-          cout << "Resulting pattern: " << endl;
-            for(unsigned int i = 0; i < new_pattern.size(); i++)
-                cout << new_pattern[i] << " ";
-            cout << endl;
-        }
-        neighbors.push_back(new_collection);
-      }
+      }      
     }
-
+    cout << "FINISHED CREATION OF NEIGHBORS" << endl << endl;
     return neighbors;
 }
 
@@ -177,10 +170,10 @@ vector<Pattern> HillClimber::run() {
     */
     // TODO: add your code for exercise (f) here.
     while(true){
-      vector<Pattern> next_collection = current_collection;
-
+      vector<Pattern> next_collection;
       int improvement = 0;
-      for(auto neigh : compute_neighbors(current_collection)){
+      vector<vector<Pattern>> neighs = compute_neighbors(current_collection);
+      for(auto neigh : neighs){
         vector<int> next_sample_values = compute_sample_heuristics(neigh);
         int counter = 0;
         for(unsigned int i = 0; i < next_sample_values.size(); i++){
