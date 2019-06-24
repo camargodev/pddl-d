@@ -29,6 +29,7 @@ fast-downward/src/search/search_engines/
 fast-downward/src/search/task*
 fast-downward/src/search/utils/
 nomystery-opt11-strips/
+output.sas
 
 
 .vscode/

@@ -3,26 +3,26 @@
 for k in 1000; do
 for i in $(seq -w 1 10); do
     echo "instance $i with k=$k"
-    PATTERN=$(./fast-downward/fast-downward.py nomystery-opt11-strips/p$i.pddl --search "astar(cpdbs(patterns=combo($k)), bound=0)" | grep "Combo pattern collection")
+    PATTERN=$(./fast-downward/fast-downward.py --build=release64 nomystery-opt11-strips/p$i.pddl --search "astar(cpdbs(patterns=combo($k)), bound=0)" | grep "Combo pattern collection")
     PATTERN=${PATTERN##Combo pattern collection: }
     echo $PATTERN
     echo "Built-in implementation"
     (
         ulimit -t 60
         ulimit -v 2000000
-        ./fast-downward/fast-downward.py nomystery-opt11-strips/p$i.pddl --search "astar(cpdbs(patterns=combo($k)))" | grep "Expanded until last jump\|Total time\|Search time"
+        ./fast-downward/fast-downward.py --build=release64 nomystery-opt11-strips/p$i.pddl --search "astar(cpdbs(patterns=combo($k)))" | grep "Expanded until last jump\|Total time\|Search time"
     )
     echo "Built-in PDB implementation"
     (
         ulimit -t 60
         ulimit -v 2000000
-        ./fast-downward/fast-downward.py nomystery-opt11-strips/p$i.pddl --search "astar(pdb(pattern=greedy($k)))" | grep "Expanded until last jump\|Total time\|Search time"
+        ./fast-downward/fast-downward.py --build=release64 nomystery-opt11-strips/p$i.pddl --search "astar(pdb(pattern=greedy($k)))" | grep "Expanded until last jump\|Total time\|Search time"
     )
     echo "PlanOpt implementation"
     (
         ulimit -t 60
         ulimit -v 2000000
-        ./fast-downward/fast-downward.py nomystery-opt11-strips/p$i.pddl --search "astar(planopt_cpdbs(patterns=$PATTERN))" | grep "Expanded until last jump\|Total time\|Search time"
+        ./fast-downward/fast-downward.py --build=release64 nomystery-opt11-strips/p$i.pddl --search "astar(planopt_cpdbs(patterns=$PATTERN))" | grep "Expanded until last jump\|Total time\|Search time"
     )
     echo
 done
