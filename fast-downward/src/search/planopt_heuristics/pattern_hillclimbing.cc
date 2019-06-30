@@ -48,14 +48,26 @@ bool HillClimber::fits_size_bound(const std::vector<Pattern> &collection) const 
       is below size_bound and false otherwise.
     */
     // TODO: add your code for exercise (f) here.
-    int count = 0;
-    for(auto p : collection){
-      count++;
+
+    /** states_with_p stores the number of abstract states achieavable with the variables in pattern p
+        values stored in variable_domains[] are explained in line 50 of tnf_task.h
+    **/
+    int states = 0;
+    for (auto p : collection) { // for each pattern...
+        int states_with_p = 1;
+        for (auto v : p) { //... and for each variable in that pattern...
+            states_with_p = states_with_p * task.variable_domains[v]; // multiplies states_with_p by the number of
+                                                                      // values the variable v can assume. doing this
+                                                                      // for every variable will give us the total
+                                                                      // amount of abstract states the pattern p can
+                                                                      // assume.
+        }
+        states += states_with_p;
+        if (states >= size_bound) {
+            return false;
+        }
     }
-    if(count < size_bound)
-      return true;
-    else
-      return false;
+    return true;
 }
 
 
@@ -96,7 +108,6 @@ vector<vector<Pattern>> HillClimber::compute_neighbors(const vector<Pattern> &co
     vector<vector<Pattern>> neighbors;
 
     // TODO: add your code for exercise (f) here.
-    cout << "STARTED CREATION OF NEIGHBORS" << endl << endl;
     for(auto p : collection){
       set<int> s1;
       set<int>::iterator it;
@@ -136,7 +147,6 @@ vector<vector<Pattern>> HillClimber::compute_neighbors(const vector<Pattern> &co
         }
       }      
     }
-    cout << "FINISHED CREATION OF NEIGHBORS" << endl << endl;
     return neighbors;
 }
 
